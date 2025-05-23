@@ -1,5 +1,4 @@
 import { useNotification } from '@/composables/notification'
-import { proxiesFilter } from '@/composables/proxies'
 import {
   NOT_CONNECTED,
   PROXY_CHAIN_DIRECTION,
@@ -8,7 +7,7 @@ import {
   ROUTE_NAME,
 } from '@/constant'
 import { timeSaved } from '@/store/overview'
-import { getLatencyByName, hiddenGroupMap, proxyMap } from '@/store/proxies'
+import { getLatencyByName, hiddenGroupMap, proxiesFilter, proxyMap } from '@/store/proxies'
 import {
   customThemes,
   hideUnavailableProxies,

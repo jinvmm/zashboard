@@ -20,12 +20,7 @@ export const scrollIntoCenter = (el: HTMLElement) => {
   const elRect = el.getBoundingClientRect()
   const parentRect = scrollableParent.getBoundingClientRect()
 
-  const parentViewTop = parentRect.top
-
-  const centerRangeStart = parentViewTop + parentRect.height * 0.15
-  const centerRangeEnd = parentViewTop + parentRect.height * 0.85
-
-  if (elRect.top >= centerRangeStart && elRect.bottom <= centerRangeEnd) return
+  if (elRect.top >= parentRect.top && elRect.bottom <= parentRect.bottom) return
 
   const parentTop = scrollableParent.offsetTop
   const childTop = el.offsetTop
@@ -41,8 +36,9 @@ export const scrollIntoCenter = (el: HTMLElement) => {
 
 const findScrollableParent = (el: HTMLElement | null): HTMLElement | null => {
   let parent = el?.parentElement
+  let index = 3
 
-  while (parent) {
+  while (parent && index--) {
     const style = getComputedStyle(parent)
     const overflowY = style.overflowY
     const isScrollable = /(auto|scroll|overlay)/.test(overflowY)

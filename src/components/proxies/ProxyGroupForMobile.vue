@@ -3,8 +3,6 @@
     class="relative h-20 cursor-pointer"
     ref="cardWrapperRef"
     @click="handlerGroupClick"
-    @touchmove="preventDefault"
-    @wheel="preventDefault"
   >
     <div
       v-if="modalMode"
@@ -74,8 +72,6 @@
         class="overflow-x-hidden overflow-y-auto overscroll-contain p-2"
         style="width: calc(100vw - 1rem)"
         ref="cardContentRef"
-        @touchmove.stop="preventDefaultForContent"
-        @wheel.stop="preventDefaultForContent"
       >
         <Component
           :is="groupProxiesByProvider ? ProxiesByProvider : ProxiesContent"
@@ -92,6 +88,7 @@
 
 <script setup lang="ts">
 import { useBounceOnVisible } from '@/composables/bouncein'
+import { isProxiesPageScrollable } from '@/composables/proxies'
 import { useRenderProxies } from '@/composables/renderProxies'
 import { isHiddenGroup } from '@/helper'
 import { hiddenGroupMap, proxyGroupLatencyTest, proxyMap } from '@/store/proxies'
@@ -217,6 +214,7 @@ const handlerTransitionEnd = (e: TransitionEvent) => {
 
 const handlerGroupClick = async () => {
   modalMode.value = !modalMode.value
+  isProxiesPageScrollable.value = !modalMode.value
   if (modalMode.value) {
     displayContent.value = true
   }
@@ -243,18 +241,6 @@ const hiddenGroup = computed({
 
 const handlerGroupToggle = () => {
   hiddenGroup.value = !hiddenGroup.value
-}
-
-const preventDefault = (e: Event) => {
-  if (modalMode.value) {
-    e.preventDefault()
-  }
-}
-
-const preventDefaultForContent = (e: Event) => {
-  if (!overflowY.value) {
-    e.preventDefault()
-  }
 }
 
 useBounceOnVisible(cardRef)
