@@ -32,7 +32,7 @@
       <div
         class="text-base-content/60 flex items-end justify-between text-sm max-sm:flex-col max-sm:items-start"
       >
-        <div>
+        <div class="min-h-8">
           <div v-if="subscriptionInfo">
             {{ subscriptionInfo.expireStr }}
           </div>
@@ -54,6 +54,7 @@
             : renderProxies.slice(0, twoColumnProxyGroup ? 48 : 96)"
           :key="node"
           :name="node"
+          :group-name="name"
         />
       </ProxyNodeGrid>
     </template>

@@ -12,6 +12,46 @@ export const getMinCardWidth = (size: PROXY_CARD_SIZE) => {
   return size === PROXY_CARD_SIZE.LARGE ? MIN_PROXY_CARD_WIDTH.LARGE : MIN_PROXY_CARD_WIDTH.SMALL
 }
 
+export const scrollIntoCenter = (el: HTMLElement) => {
+  const scrollableParent = findScrollableParent(el)
+
+  if (!scrollableParent) return
+
+  const elRect = el.getBoundingClientRect()
+  const parentRect = scrollableParent.getBoundingClientRect()
+
+  if (elRect.top >= parentRect.top && elRect.bottom <= parentRect.bottom) return
+
+  const parentTop = scrollableParent.offsetTop
+  const childTop = el.offsetTop
+
+  const centerOffset =
+    childTop - parentTop - scrollableParent.clientHeight / 2 + el.clientHeight / 2
+
+  scrollableParent.scrollTo({
+    top: centerOffset,
+    behavior: 'smooth',
+  })
+}
+
+const findScrollableParent = (el: HTMLElement | null): HTMLElement | null => {
+  let parent = el?.parentElement
+  let index = 3
+
+  while (parent && index--) {
+    const style = getComputedStyle(parent)
+    const overflowY = style.overflowY
+    const isScrollable = /(auto|scroll|overlay)/.test(overflowY)
+
+    if (isScrollable && parent.scrollHeight > parent.clientHeight) {
+      return parent
+    }
+    parent = parent.parentElement
+  }
+
+  return null
+}
+
 const BACKGROUND_IMAGE = 'background-image'
 export const LOCAL_IMAGE = 'local-image'
 

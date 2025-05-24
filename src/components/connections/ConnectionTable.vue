@@ -2,9 +2,9 @@
   <div
     ref="parentRef"
     class="h-full overflow-y-auto p-2"
-    @touchstart.stop
-    @touchmove.stop
-    @touchend.stop
+    @touchstart.passive.stop
+    @touchmove.passive.stop
+    @touchend.passive.stop
   >
     <div :style="{ height: `${totalSize}px` }">
       <table
@@ -163,6 +163,7 @@ import {
   getDestinationFromConnection,
   getDestinationTypeFromConnection,
   getHostFromConnection,
+  getInboundUserFromConnection,
   getIPLabelFromMap,
   getNetworkTypeFromConnection,
   getProcessFromConnection,
@@ -373,6 +374,11 @@ const columns: ColumnDef<Connection>[] = [
     header: () => t(CONNECTIONS_TABLE_ACCESSOR_KEY.RemoteAddress),
     id: CONNECTIONS_TABLE_ACCESSOR_KEY.RemoteAddress,
     accessorFn: (original) => original.metadata.remoteDestination || '-',
+  },
+  {
+    header: () => t(CONNECTIONS_TABLE_ACCESSOR_KEY.InboundUser),
+    id: CONNECTIONS_TABLE_ACCESSOR_KEY.InboundUser,
+    accessorFn: getInboundUserFromConnection,
   },
 ]
 

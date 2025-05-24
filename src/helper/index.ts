@@ -1,4 +1,4 @@
-import { proxiesFilter } from '@/composables/proxies'
+import { useNotification } from '@/composables/notification'
 import {
   NOT_CONNECTED,
   PROXY_CHAIN_DIRECTION,
@@ -7,7 +7,7 @@ import {
   ROUTE_NAME,
 } from '@/constant'
 import { timeSaved } from '@/store/overview'
-import { getLatencyByName, hiddenGroupMap, proxyMap } from '@/store/proxies'
+import { getLatencyByName, hiddenGroupMap, proxiesFilter, proxyMap } from '@/store/proxies'
 import {
   customThemes,
   hideUnavailableProxies,
@@ -18,6 +18,7 @@ import {
   sourceIPLabelList,
   splitOverviewPage,
 } from '@/store/settings'
+import { activeBackend } from '@/store/setup'
 import type { Backend, Connection } from '@/types'
 import dayjs from 'dayjs'
 import prettyBytes, { type Options } from 'pretty-bytes'
@@ -107,7 +108,8 @@ const preprocessSourceIPList = () => {
   sourceIPMap.clear()
   sourceIPRegexList.length = 0
 
-  for (const { key, label } of sourceIPLabelList.value) {
+  for (const { key, label, scope } of sourceIPLabelList.value) {
+    if (scope && !scope.includes(activeBackend.value?.uuid as string)) continue
     if (key.startsWith('/')) {
       sourceIPRegexList.push({ regex: new RegExp(key.slice(1), 'i'), label })
     } else {
@@ -130,7 +132,10 @@ const cacheResult = (ip: string, label: string) => {
   return label
 }
 
-watch(sourceIPLabelList, preprocessSourceIPList, { immediate: true, deep: true })
+watch(() => [sourceIPLabelList.value, activeBackend.value], preprocessSourceIPList, {
+  immediate: true,
+  deep: true,
+})
 
 export const getIPLabelFromMap = (ip: string) => {
   if (!ip) return ip === '' ? 'Inner' : ''
@@ -204,6 +209,15 @@ export const getNetworkTypeFromConnection = (connection: Connection) => {
   return `${connection.metadata.type} | ${connection.metadata.network}`
 }
 
+export const getInboundUserFromConnection = (connection: Connection) => {
+  return (
+    connection.metadata.inboundUser ||
+    connection.metadata.inboundName ||
+    connection.metadata.inboundPort ||
+    '-'
+  )
+}
+
 export const getToolTipForParams = (
   params: ToolTipParams,
   config: {
@@ -247,6 +261,10 @@ export const exportSettings = () => {
 
 export const getUrlFromBackend = (end: Omit<Backend, 'uuid'>) => {
   return `${end.protocol}://${end.host}:${end.port}${end.secondaryPath || ''}`
+}
+
+export const getLabelFromBackend = (end: Omit<Backend, 'uuid'>) => {
+  return end.label || getUrlFromBackend(end)
 }
 
 export const getColorForLatency = (latency: number) => {
@@ -293,4 +311,13 @@ export const isHiddenGroup = (group: string) => {
   }
 
   return proxyMap.value[group]?.hidden
+}
+
+export const handlerUpgradeSuccess = () => {
+  const { showNotification } = useNotification()
+
+  showNotification({
+    content: 'upgradeSuccess',
+    type: 'alert-success',
+  })
 }

@@ -43,18 +43,7 @@
         <div class="flex items-center gap-2">
           {{ $t('defaultTheme') }}
           <div class="join">
-            <select
-              class="select select-sm join-item w-48"
-              v-model="defaultTheme"
-            >
-              <option
-                v-for="opt in themes"
-                :key="opt"
-                :value="opt"
-              >
-                {{ opt }}
-              </option>
-            </select>
+            <ThemeSelector v-model:value="defaultTheme" />
             <button
               class="btn btn-sm join-item"
               @click="customThemeModal = !customThemeModal"
@@ -69,18 +58,7 @@
           v-if="autoTheme"
         >
           {{ $t('darkTheme') }}
-          <select
-            class="select select-sm w-48"
-            v-model="darkTheme"
-          >
-            <option
-              v-for="opt in themes"
-              :key="opt"
-              :value="opt"
-            >
-              {{ opt }}
-            </option>
-          </select>
+          <ThemeSelector v-model:value="darkTheme" />
         </div>
         <div class="flex items-center gap-2">
           {{ $t('fonts') }}
@@ -130,9 +108,9 @@
               max="100"
               v-model="dashboardTransparent"
               class="range max-w-64"
-              @touchstart.stop
-              @touchmove.stop
-              @touchend.stop
+              @touchstart.passive.stop
+              @touchmove.passive.stop
+              @touchend.passive.stop
             />
           </div>
 
@@ -150,60 +128,17 @@
             />
           </div>
         </template>
-        <div class="flex items-center gap-2 md:hidden">
-          {{ $t('scrollAnimationEffect') }}
-          <input
-            type="checkbox"
-            v-model="scrollAnimationEffect"
-            class="toggle"
-          />
-        </div>
-        <div class="flex items-center gap-2 md:hidden">
-          {{ $t('swipeInTabs') }}
-          <input
-            type="checkbox"
-            v-model="swipeInTabs"
-            class="toggle"
-          />
-        </div>
-        <div class="flex items-center gap-2 md:hidden">
-          {{ $t('disablePullToRefresh') }}
-          <input
-            type="checkbox"
-            v-model="disablePullToRefresh"
-            class="toggle"
-          />
-          <QuestionMarkCircleIcon
-            class="h-4 w-4 cursor-pointer"
-            @mouseenter="showTip($event, $t('disablePullToRefreshTip'))"
-          />
-        </div>
         <div
           class="flex items-center gap-2"
-          v-if="isSingBox"
+          v-if="!isSingBox || displayAllFeatures"
         >
-          {{ $t('displayAllFeatures') }}
+          {{ $t('autoUpgrade') }}
           <input
-            type="checkbox"
-            v-model="displayAllFeatures"
             class="toggle"
-          />
-          <QuestionMarkCircleIcon
-            class="h-4 w-4 cursor-pointer"
-            @mouseenter="showTip($event, $t('displayAllFeaturesTip'))"
+            type="checkbox"
+            v-model="autoUpgrade"
           />
         </div>
-      </div>
-      <div
-        class="flex items-center gap-2"
-        v-if="!isSingBox || displayAllFeatures"
-      >
-        {{ $t('autoUpgrade') }}
-        <input
-          class="toggle"
-          type="checkbox"
-          v-model="autoUpgrade"
-        />
       </div>
       <div class="grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4">
         <template v-if="!isSingBox || displayAllFeatures">
@@ -232,9 +167,8 @@
 import { isSingBox, upgradeUIAPI, zashboardVersion } from '@/api'
 import LanguageSelect from '@/components/settings/LanguageSelect.vue'
 import { useSettings } from '@/composables/settings'
-import { ALL_THEME, FONTS } from '@/constant'
-import { exportSettings } from '@/helper'
-import { useTooltip } from '@/helper/tooltip'
+import { FONTS } from '@/constant'
+import { exportSettings, handlerUpgradeSuccess } from '@/helper'
 import {
   deleteBase64FromIndexedDB,
   isPWA,
@@ -246,32 +180,21 @@ import {
   autoUpgrade,
   blurIntensity,
   customBackgroundURL,
-  customThemes,
   darkTheme,
   dashboardTransparent,
   defaultTheme,
-  disablePullToRefresh,
   displayAllFeatures,
   font,
-  scrollAnimationEffect,
-  swipeInTabs,
 } from '@/store/settings'
-import {
-  ArrowPathIcon,
-  ArrowUpCircleIcon,
-  PlusIcon,
-  QuestionMarkCircleIcon,
-} from '@heroicons/vue/24/outline'
+import { ArrowPathIcon, ArrowUpCircleIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { twMerge } from 'tailwind-merge'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import ImportSettings from '../common/ImportSettings.vue'
 import TextInput from '../common/TextInput.vue'
 import CustomTheme from './CustomTheme.vue'
+import ThemeSelector from './ThemeSelector.vue'
 
 const customThemeModal = ref(false)
-
-const { showTip } = useTooltip()
-
 const inputFileRef = ref()
 const handlerClickUpload = () => {
   inputFileRef.value?.click()
@@ -302,19 +225,14 @@ const handlerClickUpgradeUI = async () => {
   try {
     await upgradeUIAPI()
     isUIUpgrading.value = false
-    window.location.reload()
+    handlerUpgradeSuccess()
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
   } catch {
     isUIUpgrading.value = false
   }
 }
-
-const themes = computed(() => {
-  if (customThemes.value.length) {
-    return [...ALL_THEME, ...customThemes.value.map((theme) => theme.name)]
-  }
-
-  return ALL_THEME
-})
 
 const refreshPages = async () => {
   const registrations = await navigator.serviceWorker.getRegistrations()
